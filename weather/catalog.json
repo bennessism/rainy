@@ -1,0 +1,74 @@
+{
+  "default": {"country":"my","location":"sabah"},
+  "countries": {
+    "my": {
+      "name":"Malaysia",
+      "locations":[
+        {"id":"johor","name":"Johor","city":"Johor Bahru","lat":1.4927,"lon":103.7414},
+        {"id":"kedah","name":"Kedah","city":"Alor Setar","lat":6.1184,"lon":100.3685},
+        {"id":"kelantan","name":"Kelantan","city":"Kota Bharu","lat":6.1254,"lon":102.2386},
+        {"id":"melaka","name":"Melaka","city":"Melaka City","lat":2.1896,"lon":102.2501},
+        {"id":"negeri-sembilan","name":"Negeri Sembilan","city":"Seremban","lat":2.7297,"lon":101.9381},
+        {"id":"pahang","name":"Pahang","city":"Kuantan","lat":3.8077,"lon":103.3260},
+        {"id":"perak","name":"Perak","city":"Ipoh","lat":4.5975,"lon":101.0901},
+        {"id":"perlis","name":"Perlis","city":"Kangar","lat":6.4414,"lon":100.1986},
+        {"id":"pulau-pinang","name":"Pulau Pinang","city":"George Town","lat":5.4141,"lon":100.3288},
+        {"id":"selangor","name":"Selangor","city":"Shah Alam","lat":3.0738,"lon":101.5183},
+        {"id":"terengganu","name":"Terengganu","city":"Kuala Terengganu","lat":5.3296,"lon":103.1370},
+        {"id":"sabah","name":"Sabah","city":"Kota Kinabalu","lat":5.9804,"lon":116.0735},
+        {"id":"sarawak","name":"Sarawak","city":"Kuching","lat":1.5533,"lon":110.3592}
+      ]
+    },
+    "sg": {"name":"Singapore","locations":[{"id":"singapore","name":"Singapore","city":"Singapore","lat":1.3521,"lon":103.8198}]},
+    "id": {"name":"Indonesia","locations":[
+      {"id":"jakarta","name":"Jakarta","city":"Jakarta","lat":-6.2088,"lon":106.8456},
+      {"id":"surabaya","name":"Surabaya","city":"Surabaya","lat":-7.2575,"lon":112.7521},
+      {"id":"bandung","name":"Bandung","city":"Bandung","lat":-6.9175,"lon":107.6191},
+      {"id":"medan","name":"Medan","city":"Medan","lat":3.5952,"lon":98.6722},
+      {"id":"makassar","name":"Makassar","city":"Makassar","lat":-5.1477,"lon":119.4327},
+      {"id":"denpasar","name":"Denpasar","city":"Denpasar","lat":-8.6705,"lon":115.2126}
+    ]},
+    "th": {"name":"Thailand","locations":[
+      {"id":"bangkok","name":"Bangkok","city":"Bangkok","lat":13.7563,"lon":100.5018},
+      {"id":"chiang-mai","name":"Chiang Mai","city":"Chiang Mai","lat":18.7883,"lon":98.9853},
+      {"id":"phuket","name":"Phuket","city":"Phuket","lat":7.8804,"lon":98.3923},
+      {"id":"khon-kaen","name":"Khon Kaen","city":"Khon Kaen","lat":16.4419,"lon":102.8359},
+      {"id":"hat-yai","name":"Hat Yai","city":"Hat Yai","lat":7.0084,"lon":100.4747}
+    ]},
+    "ph": {"name":"Philippines","locations":[
+      {"id":"manila","name":"Manila","city":"Manila","lat":14.5995,"lon":120.9842},
+      {"id":"cebu","name":"Cebu","city":"Cebu City","lat":10.3157,"lon":123.8854},
+      {"id":"davao","name":"Davao","city":"Davao City","lat":7.1907,"lon":125.4553},
+      {"id":"baguio","name":"Baguio","city":"Baguio","lat":16.4023,"lon":120.5960},
+      {"id":"iloilo","name":"Iloilo","city":"Iloilo City","lat":10.7202,"lon":122.5621}
+    ]},
+    "vn": {"name":"Vietnam","locations":[
+      {"id":"hanoi","name":"Hanoi","city":"Hanoi","lat":21.0278,"lon":105.8342},
+      {"id":"ho-chi-minh-city","name":"Ho Chi Minh City","city":"Ho Chi Minh City","lat":10.8231,"lon":106.6297},
+      {"id":"da-nang","name":"Da Nang","city":"Da Nang","lat":16.0544,"lon":108.2022},
+      {"id":"hue","name":"Hue","city":"Hue","lat":16.4637,"lon":107.5909},
+      {"id":"can-tho","name":"Can Tho","city":"Can Tho","lat":10.0452,"lon":105.7469}
+    ]},
+    "bn": {"name":"Brunei","locations":[
+      {"id":"bandar-seri-begawan","name":"Bandar Seri Begawan","city":"Bandar Seri Begawan","lat":4.9031,"lon":114.9398},
+      {"id":"kuala-belait","name":"Kuala Belait","city":"Kuala Belait","lat":4.5836,"lon":114.1860}
+    ]},
+    "kh": {"name":"Cambodia","locations":[
+      {"id":"phnom-penh","name":"Phnom Penh","city":"Phnom Penh","lat":11.5564,"lon":104.9282},
+      {"id":"siem-reap","name":"Siem Reap","city":"Siem Reap","lat":13.3633,"lon":103.8564},
+      {"id":"sihanoukville","name":"Sihanoukville","city":"Sihanoukville","lat":10.6253,"lon":103.5234}
+    ]},
+    "la": {"name":"Laos","locations":[
+      {"id":"vientiane","name":"Vientiane","city":"Vientiane","lat":17.9757,"lon":102.6331},
+      {"id":"luang-prabang","name":"Luang Prabang","city":"Luang Prabang","lat":19.8833,"lon":102.1333},
+      {"id":"pakse","name":"Pakse","city":"Pakse","lat":15.1202,"lon":105.7989}
+    ]},
+    "mm": {"name":"Myanmar","locations":[
+      {"id":"yangon","name":"Yangon","city":"Yangon","lat":16.8409,"lon":96.1735},
+      {"id":"mandalay","name":"Mandalay","city":"Mandalay","lat":21.9588,"lon":96.0891},
+      {"id":"naypyidaw","name":"Naypyidaw","city":"Naypyidaw","lat":19.7633,"lon":96.0785},
+      {"id":"mawlamyine","name":"Mawlamyine","city":"Mawlamyine","lat":16.4905,"lon":97.6283}
+    ]},
+    "tl": {"name":"Timor-Leste","locations":[{"id":"dili","name":"Dili","city":"Dili","lat":-8.5569,"lon":125.5603}]}
+  }
+}
