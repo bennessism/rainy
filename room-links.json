@@ -1,6 +1,6 @@
 {
   "tableBooks": [
-    {"id":"book-1","title":"Book One","url":"","enabled":false,"height":"tall"},
+    {"id":"book-1","title":"The Passenger Who Wasn’t There - Episode 1: The Empty Seat","url":"https://thefictories.blogspot.com/2026/09/the-passenger-who-wasnt-there-episode-1.html","enabled":true,"height":"tall"},
     {"id":"book-2","title":"Book Two","url":"","enabled":false,"height":"medium"},
     {"id":"book-3","title":"Book Three","url":"","enabled":false,"height":"short"},
     {"id":"book-4","title":"Book Four","url":"","enabled":false,"height":"tall"},
