@@ -15,6 +15,19 @@ const countrySelect = document.getElementById('countrySelect');
 const locationSelect = document.getElementById('locationSelect');
 const weatherLabel = document.getElementById('weatherLabel');
 const weatherMeta = document.getElementById('weatherMeta');
+const weatherToggle = document.getElementById('weatherToggle');
+const weatherPanel = document.getElementById('weatherPanel');
+const weatherClose = document.getElementById('weatherClose');
+const weatherLocationButton = document.getElementById('weatherLocationButton');
+const weatherPlace = document.getElementById('weatherPlace');
+const weatherCondition = document.getElementById('weatherCondition');
+const weatherTemp = document.getElementById('weatherTemp');
+const weatherFeels = document.getElementById('weatherFeels');
+const weatherCloud = document.getElementById('weatherCloud');
+const weatherRain = document.getElementById('weatherRain');
+const weatherHumidity = document.getElementById('weatherHumidity');
+const weatherWind = document.getElementById('weatherWind');
+const weatherUpdated = document.getElementById('weatherUpdated');
 const controlDock = document.getElementById('controlDock');
 const dockToggle = document.getElementById('dockToggle');
 
@@ -30,8 +43,9 @@ let naturalFogStrength = 0;
 
 const fallbackWeather = {
   name: 'Sabah', city: 'Kota Kinabalu', temperature_c: 27,
-  relative_humidity_pct: 78, precipitation_mm: 0.6, rain_mm: 0.6,
-  showers_mm: 0, weather_code: 61, cloud_cover_pct: 76,
+  apparent_temperature_c: 32, relative_humidity_pct: 78,
+  precipitation_mm: 0.6, rain_mm: 0.6, showers_mm: 0,
+  weather_code: 61, cloud_cover_pct: 76,
   wind_speed_kmh: 10, wind_gusts_kmh: 18, is_day: false,
   time: null
 };
@@ -52,11 +66,16 @@ function weatherKind(code = 0, rain = 0) {
   return 'clear';
 }
 
-function weatherName(kind) {
+function cloudName(cloud) {
+  if (cloud <= 20) return 'Clear';
+  if (cloud <= 50) return 'Partly cloudy';
+  if (cloud <= 80) return 'Mostly cloudy';
+  return 'Overcast';
+}
+
+function weatherName(kind, cloud = 0) {
+  if (['clear', 'partly-cloudy', 'cloudy'].includes(kind)) return cloudName(cloud);
   return ({
-    clear: 'Clear',
-    'partly-cloudy': 'Partly cloudy',
-    cloudy: 'Cloudy',
     drizzle: 'Drizzle',
     rain: 'Rain',
     'heavy-rain': 'Heavy rain',
@@ -85,11 +104,40 @@ function getLocalHour(time) {
   return match ? Number(match[1]) : null;
 }
 
-function naturalCondensation(kind, humidity, rain) {
+function displayTime(time) {
+  if (!time || typeof time !== 'string') return '--';
+  const match = time.match(/T(\d{2}):(\d{2})/);
+  if (!match) return time;
+  let hour = Number(match[1]);
+  const minute = match[2];
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return `${hour}:${minute} ${suffix}`;
+}
+
+function naturalCondensation(kind, humidity) {
   if (kind === 'fog') return 0.34;
   if (kind === 'storm' || kind === 'heavy-rain') return humidity >= 88 ? 0.16 : 0.10;
   if (kind === 'rain' || kind === 'drizzle') return humidity >= 90 ? 0.11 : 0.06;
   return 0;
+}
+
+function updateWeatherCard(weather, kind, cloud, rain, humidity, wind) {
+  const condition = weatherName(kind, cloud);
+  const temp = Number(weather.temperature_c);
+  const feels = Number(weather.apparent_temperature_c);
+  const place = weather.name || weather.city || 'Location';
+  const city = weather.city && weather.city !== place ? ` · ${weather.city}` : '';
+
+  weatherPlace.textContent = `${place}${city}`;
+  weatherCondition.textContent = condition;
+  weatherTemp.textContent = Number.isFinite(temp) ? `${Math.round(temp)}°C` : '--°C';
+  weatherFeels.textContent = Number.isFinite(feels) ? `Feels ${Math.round(feels)}°C` : 'Feels --°C';
+  weatherCloud.textContent = `${Math.round(cloud)}%`;
+  weatherRain.textContent = `${rain.toFixed(rain >= 1 ? 1 : 2)} mm`;
+  weatherHumidity.textContent = `${Math.round(humidity)}%`;
+  weatherWind.textContent = `${Math.round(wind)} km/h`;
+  weatherUpdated.textContent = `Updated ${displayTime(weather.time)}`;
 }
 
 function applyWeather(weather) {
@@ -101,6 +149,7 @@ function applyWeather(weather) {
   const gust = Math.max(wind, Number(currentWeather.wind_gusts_kmh || wind));
   const isDay = Boolean(currentWeather.is_day);
   const kind = weatherKind(Number(currentWeather.weather_code || 0), rain);
+  const condition = weatherName(kind, cloud);
   const [skyTop, skyBottom] = scenePalette(isDay, kind, cloud);
   const localHour = getLocalHour(currentWeather.time);
   const isMorning = isDay && localHour !== null && localHour >= 6 && localHour < 11;
@@ -124,14 +173,13 @@ function applyWeather(weather) {
 
   const temp = Number(currentWeather.temperature_c);
   const tempText = Number.isFinite(temp) ? `${Math.round(temp)}°C` : '';
-  weatherLabel.textContent = `${currentWeather.name || currentWeather.city || 'Location'} · ${weatherName(kind)}${tempText ? ` · ${tempText}` : ''}`;
+  weatherLabel.textContent = `${currentWeather.name || currentWeather.city || 'Location'} · ${condition}${tempText ? ` · ${tempText}` : ''}`;
 
-  const cloudText = `${Math.round(cloud)}% cloud`;
-  const windText = `${Math.round(wind)} km/h wind`;
-  weatherMeta.textContent = `${currentWeather.city || currentWeather.name || ''} · ${cloudText} · ${windText}${currentWeather.time ? ` · ${currentWeather.time}` : ''}`;
+  weatherMeta.textContent = `${currentWeather.city || currentWeather.name || ''} · ${Math.round(cloud)}% cloud · ${rain.toFixed(rain >= 1 ? 1 : 2)} mm rain · ${Math.round(wind)} km/h wind${currentWeather.time ? ` · ${displayTime(currentWeather.time)}` : ''}`;
+  updateWeatherCard(currentWeather, kind, cloud, rain, humidity, wind);
 
   makeRain({ kind, rain, wind, gust });
-  naturalFogStrength = naturalCondensation(kind, humidity, rain);
+  naturalFogStrength = naturalCondensation(kind, humidity);
   fogGlass(naturalFogStrength);
   hint.style.opacity = naturalFogStrength >= 0.09 ? '1' : '0';
   scheduleLightning(kind === 'storm');
@@ -259,6 +307,12 @@ function changeLamp() {
   lampButton.setAttribute('aria-pressed', String(lampOn));
   lampControl.textContent = `Lamp · ${lampOn ? 'On' : 'Off'}`;
 }
+
+function setWeatherPanel(open) {
+  weatherPanel.hidden = !open;
+  weatherToggle.setAttribute('aria-expanded', String(open));
+}
+
 lampButton.addEventListener('click', changeLamp);
 lampControl.addEventListener('click', changeLamp);
 clearButton.addEventListener('click', () => {
@@ -266,15 +320,27 @@ clearButton.addEventListener('click', () => {
   hint.style.opacity = '1';
   setTimeout(() => { hint.style.opacity = '0'; }, 1800);
 });
+weatherToggle.addEventListener('click', () => setWeatherPanel(weatherPanel.hidden));
+weatherClose.addEventListener('click', () => setWeatherPanel(false));
+weatherLocationButton.addEventListener('click', () => {
+  setWeatherPanel(false);
+  placePanel.hidden = false;
+});
 
 dockToggle.addEventListener('click', () => {
   const open = controlDock.classList.toggle('open');
   dockToggle.setAttribute('aria-expanded', String(open));
   dockToggle.setAttribute('aria-label', open ? 'Close controls' : 'Open controls');
 });
-placeButton.addEventListener('click', () => { placePanel.hidden = false; });
+placeButton.addEventListener('click', () => {
+  setWeatherPanel(false);
+  placePanel.hidden = false;
+});
 closePlace.addEventListener('click', () => { placePanel.hidden = true; });
 placePanel.addEventListener('click', event => { if (event.target === placePanel) placePanel.hidden = true; });
+document.addEventListener('pointerdown', event => {
+  if (!weatherPanel.hidden && !weatherPanel.contains(event.target) && !weatherToggle.contains(event.target)) setWeatherPanel(false);
+});
 
 function fillCountries(selected) {
   countrySelect.innerHTML = '';
