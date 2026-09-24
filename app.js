@@ -32,10 +32,14 @@ const controlDock = document.getElementById('controlDock');
 const dockToggle = document.getElementById('dockToggle');
 const blindButton = document.getElementById('blindButton');
 const musicBox = document.getElementById('musicBox');
-const wallLampButton = document.getElementById('wallLampButton');
 const roomTrack = document.getElementById('roomTrack');
 const roomDots = Array.from(document.querySelectorAll('.room-dot'));
-const bookButtons = Array.from(document.querySelectorAll('.book'));
+const bookButtons = Array.from(document.querySelectorAll('.table-book'));
+const photoFrame = document.getElementById('photoFrame');
+const photoFrameInner = document.getElementById('photoFrameInner');
+const frameImage = document.getElementById('frameImage');
+const frameAbstract = document.getElementById('frameAbstract');
+const frameEffects = document.getElementById('frameEffects');
 
 let catalog = null;
 let currentWeather = null;
@@ -43,7 +47,6 @@ let drops = [];
 let drawing = false;
 let last = null;
 let lampOn = true;
-let wallLampOn = true;
 let dpr = 1;
 let lightningTimer = null;
 let naturalFogStrength = 0;
@@ -315,12 +318,6 @@ function changeLamp() {
   lampControl.textContent = `Lamp · ${lampOn ? 'On' : 'Off'}`;
 }
 
-function changeWallLamp() {
-  wallLampOn = !wallLampOn;
-  wallLampButton?.classList.toggle('off', !wallLampOn);
-  wallLampButton?.setAttribute('aria-pressed', String(wallLampOn));
-}
-
 function setWeatherPanel(open) {
   weatherPanel.hidden = !open;
   weatherToggle.setAttribute('aria-expanded', String(open));
@@ -350,14 +347,12 @@ function scheduleMusicNote(context, destination, frequency, start, duration) {
   gain.gain.exponentialRampToValueAtTime(0.085, start + 0.012);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   gain.connect(destination);
-
   const fundamental = context.createOscillator();
   fundamental.type = 'sine';
   fundamental.frequency.setValueAtTime(frequency, start);
   fundamental.connect(gain);
   fundamental.start(start);
   fundamental.stop(start + duration + 0.03);
-
   const overtoneGain = context.createGain();
   overtoneGain.gain.value = 0.22;
   overtoneGain.connect(gain);
@@ -375,19 +370,17 @@ function playMusicPhrase() {
   const master = context.createGain();
   master.gain.value = 0.72;
   master.connect(context.destination);
-
   const melody = [
-    [659.25,.22],[622.25,.22],[659.25,.22],[622.25,.22],[659.25,.22],[493.88,.27],[587.33,.22],[523.25,.22],[440.00,.42],
-    [261.63,.22],[329.63,.22],[440.00,.22],[493.88,.42],[329.63,.22],[415.30,.22],[493.88,.22],[523.25,.42],
-    [329.63,.22],[659.25,.22],[622.25,.22],[659.25,.22],[622.25,.22],[659.25,.22],[493.88,.27],[587.33,.22],[523.25,.22],[440.00,.48]
+    [659.25,.22],[622.25,.22],[659.25,.22],[622.25,.22],[659.25,.22],[493.88,.27],[587.33,.22],[523.25,.22],[440,.42],
+    [261.63,.22],[329.63,.22],[440,.22],[493.88,.42],[329.63,.22],[415.30,.22],[493.88,.22],[523.25,.42],
+    [329.63,.22],[659.25,.22],[622.25,.22],[659.25,.22],[622.25,.22],[659.25,.22],[493.88,.27],[587.33,.22],[523.25,.22],[440,.48]
   ];
   let cursor = context.currentTime + 0.05;
   for (const [frequency, duration] of melody) {
     scheduleMusicNote(context, master, frequency, cursor, duration * 0.88);
     cursor += duration;
   }
-  const loopDelay = Math.max(200, (cursor - context.currentTime + 0.45) * 1000);
-  musicLoopTimer = setTimeout(playMusicPhrase, loopDelay);
+  musicLoopTimer = setTimeout(playMusicPhrase, Math.max(200, (cursor - context.currentTime + 0.45) * 1000));
 }
 
 async function startMusicBox() {
@@ -426,21 +419,17 @@ async function loadRoomLinks() {
     const response = await fetch(`room-links.json?ts=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Room links unavailable');
     const data = await response.json();
-    const books = data.bookshelf?.books || [];
+    const books = data.tableBooks || [];
     const byId = Object.fromEntries(books.map(book => [book.id, book]));
     bookButtons.forEach(button => {
       const book = byId[button.dataset.bookId];
-      const label = button.querySelector('.book-label');
-      if (!book) {
-        button.hidden = true;
-        return;
-      }
+      const label = button.querySelector('.table-book-label');
+      if (!book) { button.hidden = true; return; }
       button.hidden = false;
       label.textContent = book.title || '';
       button.title = book.title || '';
-      button.classList.toggle('horizontal', book.orientation === 'horizontal');
-      const targetShelf = document.querySelector(`.shelf[data-shelf="${book.shelf || 'top'}"]`);
-      if (targetShelf && button.parentElement !== targetShelf) targetShelf.appendChild(button);
+      button.classList.remove('tall', 'medium', 'short');
+      button.classList.add(['tall','medium','short'].includes(book.height) ? book.height : 'medium');
       const enabled = Boolean(book.enabled && book.url);
       button.classList.toggle('enabled', enabled);
       button.onclick = enabled ? () => window.open(book.url, '_blank', 'noopener,noreferrer') : null;
@@ -450,9 +439,55 @@ async function loadRoomLinks() {
   }
 }
 
+function buildFrameParticles(colors, strength) {
+  frameEffects.querySelectorAll('.frame-particle').forEach(node => node.remove());
+  const count = Math.round(8 + clamp(Number(strength) || 0, 0, 1) * 18);
+  for (let i = 0; i < count; i += 1) {
+    const particle = document.createElement('i');
+    particle.className = 'frame-particle';
+    particle.style.left = `${rand(4, 96)}%`;
+    particle.style.top = `${rand(4, 96)}%`;
+    particle.style.setProperty('--particle-color', colors[i % colors.length]);
+    particle.style.setProperty('--particle-speed', `${rand(5.5, 11).toFixed(1)}s`);
+    particle.style.animationDelay = `${rand(-8, 0).toFixed(1)}s`;
+    frameEffects.appendChild(particle);
+  }
+}
+
+async function loadRoomFrame() {
+  try {
+    const response = await fetch(`room-frame.json?ts=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Frame config unavailable');
+    const data = await response.json();
+    const frame = data.rightFrame || {};
+    photoFrame.hidden = frame.enabled === false;
+    const colors = Array.isArray(frame.accentColors) && frame.accentColors.length ? frame.accentColors : ['#d89a63','#7db6d8','#bd83b4','#8cc5a0'];
+    colors.slice(0, 4).forEach((color, i) => photoFrame.style.setProperty(`--frame-accent-${i + 1}`, color));
+    photoFrame.classList.remove('black', 'light', 'mat-off');
+    if (frame.frameStyle === 'black') photoFrame.classList.add('black');
+    if (frame.frameStyle === 'light') photoFrame.classList.add('light');
+    if (frame.mat === false) photoFrame.classList.add('mat-off');
+    if (frame.matColor) photoFrameInner.style.background = frame.matColor;
+    photoFrame.dataset.effect = frame.effect || 'particles';
+    frameImage.style.objectFit = frame.fit === 'contain' ? 'contain' : 'cover';
+    frameImage.alt = frame.title || 'Framed artwork';
+    if (frame.imageUrl) {
+      frameImage.onload = () => { frameImage.classList.add('show'); frameAbstract.style.display = 'none'; };
+      frameImage.onerror = () => { frameImage.classList.remove('show'); frameAbstract.style.display = 'block'; };
+      frameImage.src = frame.imageUrl;
+    } else {
+      frameImage.classList.remove('show');
+      frameImage.removeAttribute('src');
+      frameAbstract.style.display = 'block';
+    }
+    buildFrameParticles(colors, frame.effectStrength);
+  } catch (error) {
+    console.warn('Room frame could not be loaded.', error);
+  }
+}
+
 lampButton.addEventListener('click', changeLamp);
 lampControl.addEventListener('click', changeLamp);
-wallLampButton?.addEventListener('click', changeWallLamp);
 blindButton.addEventListener('click', cycleBlinds);
 musicBox.addEventListener('click', toggleMusicBox);
 clearButton.addEventListener('click', () => {
@@ -481,16 +516,12 @@ if (roomTrack) roomTrack.addEventListener('scroll', () => { if (window.innerWidt
 
 function fillCountries(selected) {
   countrySelect.innerHTML = '';
-  Object.entries(catalog.countries).forEach(([code, country]) => { const option = new Option(country.name, code, false, code === selected); countrySelect.add(option); });
+  Object.entries(catalog.countries).forEach(([code, country]) => { countrySelect.add(new Option(country.name, code, false, code === selected)); });
 }
 
 function fillLocations(countryCode, selected) {
   locationSelect.innerHTML = '';
-  const country = catalog.countries[countryCode];
-  country.locations.forEach(location => {
-    const option = new Option(location.name, location.id, false, location.id === selected);
-    locationSelect.add(option);
-  });
+  catalog.countries[countryCode].locations.forEach(location => { locationSelect.add(new Option(location.name, location.id, false, location.id === selected)); });
 }
 
 async function loadWeather(countryCode, locationId) {
@@ -538,4 +569,5 @@ sizeCanvases();
 animateRain();
 initWeather();
 loadRoomLinks();
+loadRoomFrame();
 requestAnimationFrame(() => { if (window.innerWidth <= 900) scrollRoomTo(1, false); });
