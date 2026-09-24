@@ -1,4 +1,4 @@
-const CACHE_NAME = 'window-v1';
+const CACHE_NAME = 'window-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -30,12 +30,16 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  const freshFirst = url.pathname.includes('/weather/data/') ||
+  const networkFirst = request.mode === 'navigate' ||
+    url.pathname.endsWith('/index.html') ||
+    url.pathname.endsWith('/style.css') ||
+    url.pathname.endsWith('/app.js') ||
+    url.pathname.includes('/weather/data/') ||
     url.pathname.endsWith('/weather/catalog.json') ||
     url.pathname.endsWith('/room-links.json') ||
     url.pathname.endsWith('/room-frame.json');
 
-  if (freshFirst) {
+  if (networkFirst) {
     event.respondWith(
       fetch(request)
         .then(response => {
@@ -45,7 +49,7 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => caches.match(request))
+        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html')))
     );
     return;
   }
