@@ -108,10 +108,30 @@ function scenePalette(isDay, kind, cloud) {
   return ['#5f99c6', '#b7d7e8'];
 }
 
-function getLocalHour(time) {
-  if (!time || typeof time !== 'string') return null;
-  const match = time.match(/T(\d{2}):/);
-  return match ? Number(match[1]) : null;
+function liveTimeOfDay() {
+  const hour = new Date().getHours();
+  return {
+    isDay: hour >= 6 && hour < 19,
+    isMorning: hour >= 6 && hour < 11
+  };
+}
+
+function applySceneTime(kind, cloud) {
+  const { isDay, isMorning } = liveTimeOfDay();
+  const [skyTop, skyBottom] = scenePalette(isDay, kind, cloud);
+  app.classList.toggle('is-night', !isDay);
+  app.classList.toggle('is-day', isDay);
+  app.classList.toggle('is-morning', isMorning);
+  app.style.setProperty('--sky-top', skyTop);
+  app.style.setProperty('--sky-bottom', skyBottom);
+}
+
+function refreshSceneTime() {
+  const weather = currentWeather || fallbackWeather;
+  const rain = Number(weather.rain_mm || 0) + Number(weather.showers_mm || 0);
+  const cloud = clamp(Number(weather.cloud_cover_pct || 0), 0, 100);
+  const kind = weatherKind(Number(weather.weather_code || 0), rain);
+  applySceneTime(kind, cloud);
 }
 
 function displayTime(time) {
@@ -156,19 +176,11 @@ function applyWeather(weather) {
   const humidity = clamp(Number(currentWeather.relative_humidity_pct || 60), 0, 100);
   const wind = Math.max(0, Number(currentWeather.wind_speed_kmh || 0));
   const gust = Math.max(wind, Number(currentWeather.wind_gusts_kmh || wind));
-  const isDay = Boolean(currentWeather.is_day);
   const kind = weatherKind(Number(currentWeather.weather_code || 0), rain);
   const condition = weatherName(kind, cloud);
-  const [skyTop, skyBottom] = scenePalette(isDay, kind, cloud);
-  const localHour = getLocalHour(currentWeather.time);
-  const isMorning = isDay && localHour !== null && localHour >= 6 && localHour < 11;
 
-  app.classList.toggle('is-night', !isDay);
-  app.classList.toggle('is-day', isDay);
-  app.classList.toggle('is-morning', isMorning);
+  applySceneTime(kind, cloud);
   app.dataset.weather = kind;
-  app.style.setProperty('--sky-top', skyTop);
-  app.style.setProperty('--sky-bottom', skyBottom);
   app.style.setProperty('--cloud', String(clamp((cloud - 8) / 92, 0.03, 1)));
 
   let haze = cloud / 520;
@@ -564,6 +576,11 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => { sizeCanvases(); if (window.innerWidth <= 900) scrollRoomTo(1, false); }, 120);
 });
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshSceneTime();
+});
+setInterval(refreshSceneTime, 60 * 1000);
 
 sizeCanvases();
 animateRain();
