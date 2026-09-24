@@ -26,6 +26,7 @@ let last = null;
 let lampOn = true;
 let dpr = 1;
 let lightningTimer = null;
+let naturalFogStrength = 0;
 
 const fallbackWeather = {
   name: 'Sabah', city: 'Kota Kinabalu', temperature_c: 27,
@@ -78,6 +79,19 @@ function scenePalette(isDay, kind, cloud) {
   return ['#5f99c6', '#b7d7e8'];
 }
 
+function getLocalHour(time) {
+  if (!time || typeof time !== 'string') return null;
+  const match = time.match(/T(\d{2}):/);
+  return match ? Number(match[1]) : null;
+}
+
+function naturalCondensation(kind, humidity, rain) {
+  if (kind === 'fog') return 0.34;
+  if (kind === 'storm' || kind === 'heavy-rain') return humidity >= 88 ? 0.16 : 0.10;
+  if (kind === 'rain' || kind === 'drizzle') return humidity >= 90 ? 0.11 : 0.06;
+  return 0;
+}
+
 function applyWeather(weather) {
   currentWeather = weather || fallbackWeather;
   const rain = Number(currentWeather.rain_mm || 0) + Number(currentWeather.showers_mm || 0);
@@ -88,9 +102,12 @@ function applyWeather(weather) {
   const isDay = Boolean(currentWeather.is_day);
   const kind = weatherKind(Number(currentWeather.weather_code || 0), rain);
   const [skyTop, skyBottom] = scenePalette(isDay, kind, cloud);
+  const localHour = getLocalHour(currentWeather.time);
+  const isMorning = isDay && localHour !== null && localHour >= 6 && localHour < 11;
 
   app.classList.toggle('is-night', !isDay);
   app.classList.toggle('is-day', isDay);
+  app.classList.toggle('is-morning', isMorning);
   app.dataset.weather = kind;
   app.style.setProperty('--sky-top', skyTop);
   app.style.setProperty('--sky-bottom', skyBottom);
@@ -114,7 +131,9 @@ function applyWeather(weather) {
   weatherMeta.textContent = `${currentWeather.city || currentWeather.name || ''} · ${cloudText} · ${windText}${currentWeather.time ? ` · ${currentWeather.time}` : ''}`;
 
   makeRain({ kind, rain, wind, gust });
-  fogGlass(clamp((humidity - 45) / 100 + haze * 0.35 + (rain > 0 ? 0.08 : 0), 0.18, 0.52));
+  naturalFogStrength = naturalCondensation(kind, humidity, rain);
+  fogGlass(naturalFogStrength);
+  hint.style.opacity = naturalFogStrength >= 0.09 ? '1' : '0';
   scheduleLightning(kind === 'storm');
 }
 
@@ -173,10 +192,11 @@ function animateRain() {
   requestAnimationFrame(animateRain);
 }
 
-function fogGlass(strength = .28) {
+function fogGlass(strength = 0) {
   const box = fogCanvas.getBoundingClientRect();
   fogCtx.globalCompositeOperation = 'source-over';
   fogCtx.clearRect(0, 0, box.width, box.height);
+  if (strength <= 0.005) return;
   const gradient = fogCtx.createLinearGradient(0, 0, box.width, box.height);
   gradient.addColorStop(0, `rgba(228,237,240,${strength})`);
   gradient.addColorStop(.52, `rgba(205,220,226,${strength * .78})`);
@@ -242,9 +262,9 @@ function changeLamp() {
 lampButton.addEventListener('click', changeLamp);
 lampControl.addEventListener('click', changeLamp);
 clearButton.addEventListener('click', () => {
-  applyWeather(currentWeather || fallbackWeather);
+  fogGlass(0.30);
   hint.style.opacity = '1';
-  setTimeout(() => { hint.style.opacity = '0'; }, 1500);
+  setTimeout(() => { hint.style.opacity = '0'; }, 1800);
 });
 
 dockToggle.addEventListener('click', () => {
