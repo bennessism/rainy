@@ -7,12 +7,18 @@
   <title>Window</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .lamp-head{z-index:4}
-    .lamp-head:before{content:"";position:absolute;right:5px;bottom:4px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#81766b,#4a4540 68%);box-shadow:0 1px 0 rgba(255,255,255,.08),0 3px 8px rgba(0,0,0,.28)}
-    .lamp-arm{z-index:3;top:72px;left:101px;width:56px;height:7px;transform:rotate(28deg);background:linear-gradient(180deg,#6a625a,#45413d)}
-    .lamp-joint{position:absolute;z-index:5;top:88px;left:125px;width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8a8076,#4d4843 68%);box-shadow:0 1px 0 rgba(255,255,255,.1),0 4px 10px rgba(0,0,0,.28)}
-    .lamp-pole{top:99px;left:130px}
-    @media(max-width:760px){.lamp-arm{top:58px;left:64px;width:45px}.lamp-joint{top:72px;left:91px;width:14px;height:14px}.lamp-pole{top:81px;left:97px}}
+    .room{padding-top:10vh}
+    .room-light{left:50%;right:auto;top:2vh;bottom:auto;width:min(64vw,760px);height:min(46vw,520px);transform:translateX(-50%);background:radial-gradient(ellipse at 50% 14%,rgba(255,197,112,.24),rgba(255,164,72,.08) 38%,transparent 72%)}
+    .ceiling-lamp{position:absolute;z-index:8;left:calc(50% + 28px);top:0;width:112px;height:132px;transform:translateX(-50%);border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 12px 18px rgba(0,0,0,.28))}
+    .lamp-canopy{position:absolute;left:38px;top:0;width:36px;height:9px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#57514c,#353230);box-shadow:inset 0 -1px rgba(255,255,255,.05)}
+    .lamp-cord{position:absolute;left:54px;top:8px;width:4px;height:54px;border-radius:4px;background:linear-gradient(90deg,#393634,#615b56,#353230)}
+    .lamp-socket{position:absolute;left:46px;top:58px;width:20px;height:19px;border-radius:6px 6px 8px 8px;background:linear-gradient(90deg,#403c38,#706860 50%,#3d3936);box-shadow:inset 0 1px rgba(255,255,255,.08)}
+    .lamp-shade{position:absolute;left:20px;top:70px;width:72px;height:43px;border-radius:10px 10px 18px 18px;background:linear-gradient(180deg,#d7b17c,#9b7042);clip-path:polygon(24% 0,76% 0,100% 100%,0 100%)}
+    .lamp-shade:after{content:"";position:absolute;left:10px;right:10px;bottom:-8px;height:17px;border-radius:50%;background:rgba(255,207,126,.92);box-shadow:0 0 34px 14px rgba(255,180,83,.28)}
+    .app.lamp-off .lamp-shade{background:linear-gradient(180deg,#71685d,#47413a)}
+    .app.lamp-off .lamp-shade:after{opacity:.05;box-shadow:none}
+    @media(max-width:760px){.room{padding-top:10.5vh}.ceiling-lamp{left:50%;width:96px;height:112px}.lamp-canopy{left:32px;width:32px;height:8px}.lamp-cord{left:47px;top:7px;height:43px}.lamp-socket{left:39px;top:47px;width:20px;height:18px}.lamp-shade{left:16px;top:61px;width:66px;height:39px}.room-light{top:1vh;width:92vw;height:42vh}}
+    @media(max-width:430px){.ceiling-lamp{height:104px}.lamp-cord{height:36px}.lamp-socket{top:40px}.lamp-shade{top:54px}}
   </style>
 </head>
 <body>
@@ -24,6 +30,13 @@
 
     <section class="room" aria-label="A quiet room overlooking the city">
       <div class="room-light" aria-hidden="true"></div>
+
+      <button class="ceiling-lamp" id="lampButton" type="button" aria-label="Toggle ceiling lamp" aria-pressed="true">
+        <span class="lamp-canopy"></span>
+        <span class="lamp-cord"></span>
+        <span class="lamp-socket"></span>
+        <span class="lamp-shade"></span>
+      </button>
 
       <section class="window-shell" aria-label="Weather window">
         <div class="window-scene" id="windowScene">
@@ -58,14 +71,6 @@
           <div class="hint" id="hint">Draw on the glass</div>
         </div>
       </section>
-
-      <button class="floor-lamp" id="lampButton" type="button" aria-label="Toggle floor lamp" aria-pressed="true">
-        <span class="lamp-head"></span>
-        <span class="lamp-arm"></span>
-        <span class="lamp-joint"></span>
-        <span class="lamp-pole"></span>
-        <span class="lamp-foot"></span>
-      </button>
     </section>
 
     <nav class="control-dock" id="controlDock" aria-label="Window controls">
