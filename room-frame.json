@@ -1,0 +1,15 @@
+{
+  "rightFrame": {
+    "enabled": true,
+    "title": "Main Frame",
+    "imageUrl": "",
+    "fallback": "abstract-color",
+    "fit": "cover",
+    "frameStyle": "walnut",
+    "mat": true,
+    "matColor": "#f1ece3",
+    "effect": "particles",
+    "effectStrength": 0.28,
+    "accentColors": ["#d89a63", "#7db6d8", "#bd83b4", "#8cc5a0"]
+  }
+}
