@@ -32,6 +32,7 @@ const controlDock = document.getElementById('controlDock');
 const dockToggle = document.getElementById('dockToggle');
 const blindButton = document.getElementById('blindButton');
 const musicBox = document.getElementById('musicBox');
+const wallLampButton = document.getElementById('wallLampButton');
 const roomTrack = document.getElementById('roomTrack');
 const roomDots = Array.from(document.querySelectorAll('.room-dot'));
 const bookButtons = Array.from(document.querySelectorAll('.book'));
@@ -42,9 +43,12 @@ let drops = [];
 let drawing = false;
 let last = null;
 let lampOn = true;
+let wallLampOn = true;
 let dpr = 1;
 let lightningTimer = null;
 let naturalFogStrength = 0;
+let renderedFogStrength = 0;
+let manualFog = null;
 let blindStep = -1;
 let musicAudioContext = null;
 let musicLoopTimer = null;
@@ -181,8 +185,7 @@ function applyWeather(weather) {
 
   makeRain({ kind, rain, wind, gust });
   naturalFogStrength = naturalCondensation(kind, humidity);
-  fogGlass(naturalFogStrength);
-  hint.style.opacity = naturalFogStrength >= 0.09 ? '1' : '0';
+  renderFog();
   scheduleLightning(kind === 'storm');
 }
 
@@ -230,16 +233,27 @@ function animateRain() {
 }
 
 function fogGlass(strength = 0) {
+  renderedFogStrength = strength;
   const box = fogCanvas.getBoundingClientRect();
   fogCtx.globalCompositeOperation = 'source-over';
   fogCtx.clearRect(0, 0, box.width, box.height);
-  if (strength <= 0.005) return;
+  const active = strength > 0.005;
+  fogCanvas.style.pointerEvents = active ? 'auto' : 'none';
+  fogCanvas.style.touchAction = active ? 'none' : 'pan-x';
+  clearButton.textContent = `Fog · ${active ? 'On' : 'Off'}`;
+  if (!active) return;
   const gradient = fogCtx.createLinearGradient(0, 0, box.width, box.height);
   gradient.addColorStop(0, `rgba(228,237,240,${strength})`);
   gradient.addColorStop(.52, `rgba(205,220,226,${strength * .78})`);
   gradient.addColorStop(1, `rgba(188,207,214,${strength * .92})`);
   fogCtx.fillStyle = gradient;
   fogCtx.fillRect(0, 0, box.width, box.height);
+}
+
+function renderFog() {
+  const strength = manualFog === null ? naturalFogStrength : (manualFog ? 0.30 : 0);
+  fogGlass(strength);
+  hint.style.opacity = strength >= 0.09 ? '1' : '0';
 }
 
 function pointerPosition(event) {
@@ -261,11 +275,31 @@ function drawClearLine(a, b) {
   fogCtx.restore();
 }
 
-fogCanvas.addEventListener('pointerdown', event => { drawing = true; fogCanvas.setPointerCapture(event.pointerId); last = pointerPosition(event); drawClearLine(last, last); hint.style.opacity = '0'; });
-fogCanvas.addEventListener('pointermove', event => { if (!drawing) return; const next = pointerPosition(event); drawClearLine(last, next); last = next; });
-function endDrawing() { drawing = false; last = null; }
+fogCanvas.addEventListener('pointerdown', event => {
+  if (renderedFogStrength <= 0.005) return;
+  event.preventDefault();
+  drawing = true;
+  roomTrack?.classList.add('drawing-fog');
+  fogCanvas.setPointerCapture(event.pointerId);
+  last = pointerPosition(event);
+  drawClearLine(last, last);
+  hint.style.opacity = '0';
+});
+fogCanvas.addEventListener('pointermove', event => {
+  if (!drawing) return;
+  event.preventDefault();
+  const next = pointerPosition(event);
+  drawClearLine(last, next);
+  last = next;
+});
+function endDrawing() {
+  drawing = false;
+  last = null;
+  roomTrack?.classList.remove('drawing-fog');
+}
 fogCanvas.addEventListener('pointerup', endDrawing);
 fogCanvas.addEventListener('pointercancel', endDrawing);
+fogCanvas.addEventListener('lostpointercapture', endDrawing);
 
 function scheduleLightning(enabled) {
   clearTimeout(lightningTimer);
@@ -279,6 +313,12 @@ function changeLamp() {
   app.classList.toggle('lamp-off', !lampOn);
   lampButton.setAttribute('aria-pressed', String(lampOn));
   lampControl.textContent = `Lamp · ${lampOn ? 'On' : 'Off'}`;
+}
+
+function changeWallLamp() {
+  wallLampOn = !wallLampOn;
+  wallLampButton?.classList.toggle('off', !wallLampOn);
+  wallLampButton?.setAttribute('aria-pressed', String(wallLampOn));
 }
 
 function setWeatherPanel(open) {
@@ -412,9 +452,17 @@ async function loadRoomLinks() {
 
 lampButton.addEventListener('click', changeLamp);
 lampControl.addEventListener('click', changeLamp);
+wallLampButton?.addEventListener('click', changeWallLamp);
 blindButton.addEventListener('click', cycleBlinds);
 musicBox.addEventListener('click', toggleMusicBox);
-clearButton.addEventListener('click', () => { fogGlass(0.30); hint.style.opacity = '1'; setTimeout(() => { hint.style.opacity = '0'; }, 1800); });
+clearButton.addEventListener('click', () => {
+  manualFog = renderedFogStrength <= 0.005;
+  renderFog();
+  if (manualFog) {
+    hint.style.opacity = '1';
+    setTimeout(() => { if (renderedFogStrength > 0.005) hint.style.opacity = '0'; }, 1800);
+  }
+});
 weatherToggle.addEventListener('click', () => setWeatherPanel(weatherPanel.hidden));
 weatherClose.addEventListener('click', () => setWeatherPanel(false));
 weatherLocationButton.addEventListener('click', () => { setWeatherPanel(false); placePanel.hidden = false; });
@@ -439,7 +487,10 @@ function fillCountries(selected) {
 function fillLocations(countryCode, selected) {
   locationSelect.innerHTML = '';
   const country = catalog.countries[countryCode];
-  country.locations.forEach(location => { const option = new Option(location.name, location.id, false, location.id === selected); countrySelect.add ? locationSelect.add(option) : null; });
+  country.locations.forEach(location => {
+    const option = new Option(location.name, location.id, false, location.id === selected);
+    locationSelect.add(option);
+  });
 }
 
 async function loadWeather(countryCode, locationId) {
