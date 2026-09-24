@@ -30,6 +30,11 @@ const weatherWind = document.getElementById('weatherWind');
 const weatherUpdated = document.getElementById('weatherUpdated');
 const controlDock = document.getElementById('controlDock');
 const dockToggle = document.getElementById('dockToggle');
+const blindButton = document.getElementById('blindButton');
+const musicBox = document.getElementById('musicBox');
+const roomTrack = document.getElementById('roomTrack');
+const roomDots = Array.from(document.querySelectorAll('.room-dot'));
+const bookButtons = Array.from(document.querySelectorAll('.book'));
 
 let catalog = null;
 let currentWeather = null;
@@ -40,6 +45,7 @@ let lampOn = true;
 let dpr = 1;
 let lightningTimer = null;
 let naturalFogStrength = 0;
+let blindStep = -1;
 
 const fallbackWeather = {
   name: 'Sabah', city: 'Kota Kinabalu', temperature_c: 27,
@@ -75,13 +81,7 @@ function cloudName(cloud) {
 
 function weatherName(kind, cloud = 0) {
   if (['clear', 'partly-cloudy', 'cloudy'].includes(kind)) return cloudName(cloud);
-  return ({
-    drizzle: 'Drizzle',
-    rain: 'Rain',
-    'heavy-rain': 'Heavy rain',
-    storm: 'Thunderstorm',
-    fog: 'Mist / fog'
-  })[kind] || 'Weather';
+  return ({ drizzle: 'Drizzle', rain: 'Rain', 'heavy-rain': 'Heavy rain', storm: 'Thunderstorm', fog: 'Mist / fog' })[kind] || 'Weather';
 }
 
 function scenePalette(isDay, kind, cloud) {
@@ -128,7 +128,6 @@ function updateWeatherCard(weather, kind, cloud, rain, humidity, wind) {
   const feels = Number(weather.apparent_temperature_c);
   const place = weather.name || weather.city || 'Location';
   const city = weather.city && weather.city !== place ? ` · ${weather.city}` : '';
-
   weatherPlace.textContent = `${place}${city}`;
   weatherCondition.textContent = condition;
   weatherTemp.textContent = Number.isFinite(temp) ? `${Math.round(temp)}°C` : '--°C';
@@ -174,7 +173,6 @@ function applyWeather(weather) {
   const temp = Number(currentWeather.temperature_c);
   const tempText = Number.isFinite(temp) ? `${Math.round(temp)}°C` : '';
   weatherLabel.textContent = `${currentWeather.name || currentWeather.city || 'Location'} · ${condition}${tempText ? ` · ${tempText}` : ''}`;
-
   weatherMeta.textContent = `${currentWeather.city || currentWeather.name || ''} · ${Math.round(cloud)}% cloud · ${rain.toFixed(rain >= 1 ? 1 : 2)} mm rain · ${Math.round(wind)} km/h wind${currentWeather.time ? ` · ${displayTime(currentWeather.time)}` : ''}`;
   updateWeatherCard(currentWeather, kind, cloud, rain, humidity, wind);
 
@@ -205,18 +203,9 @@ function makeRain({ kind, rain, wind, gust }) {
   if (kind === 'heavy-rain') count = 170 + Math.round(rain * 18);
   if (kind === 'storm') count = 210 + Math.round(rain * 20);
   count = clamp(count, 0, 330);
-
   const speedBase = 3.2 + clamp(rain * 0.9, 0, 7) + clamp(gust / 25, 0, 3);
   const slant = clamp(wind / 85, 0.02, 0.46);
-
-  drops = Array.from({ length: count }, () => ({
-    x: rand(-40, box.width + 40),
-    y: rand(-box.height, box.height),
-    speed: rand(speedBase * 0.72, speedBase * 1.28),
-    length: rand(kind === 'drizzle' ? 6 : 12, kind === 'storm' ? 37 : 29),
-    alpha: rand(0.08, kind === 'storm' ? 0.34 : 0.27),
-    drift: slant * rand(0.68, 1.25)
-  }));
+  drops = Array.from({ length: count }, () => ({ x: rand(-40, box.width + 40), y: rand(-box.height, box.height), speed: rand(speedBase * 0.72, speedBase * 1.28), length: rand(kind === 'drizzle' ? 6 : 12, kind === 'storm' ? 37 : 29), alpha: rand(0.08, kind === 'storm' ? 0.34 : 0.27), drift: slant * rand(0.68, 1.25) }));
 }
 
 function animateRain() {
@@ -232,10 +221,7 @@ function animateRain() {
     rainCtx.stroke();
     drop.y += drop.speed;
     drop.x += drop.drift * drop.speed * .22;
-    if (drop.y > box.height + 45 || drop.x > box.width + 80) {
-      drop.y = rand(-180, -20);
-      drop.x = rand(-50, box.width + 10);
-    }
+    if (drop.y > box.height + 45 || drop.x > box.width + 80) { drop.y = rand(-180, -20); drop.x = rand(-50, box.width + 10); }
   }
   requestAnimationFrame(animateRain);
 }
@@ -272,19 +258,8 @@ function drawClearLine(a, b) {
   fogCtx.restore();
 }
 
-fogCanvas.addEventListener('pointerdown', event => {
-  drawing = true;
-  fogCanvas.setPointerCapture(event.pointerId);
-  last = pointerPosition(event);
-  drawClearLine(last, last);
-  hint.style.opacity = '0';
-});
-fogCanvas.addEventListener('pointermove', event => {
-  if (!drawing) return;
-  const next = pointerPosition(event);
-  drawClearLine(last, next);
-  last = next;
-});
+fogCanvas.addEventListener('pointerdown', event => { drawing = true; fogCanvas.setPointerCapture(event.pointerId); last = pointerPosition(event); drawClearLine(last, last); hint.style.opacity = '0'; });
+fogCanvas.addEventListener('pointermove', event => { if (!drawing) return; const next = pointerPosition(event); drawClearLine(last, next); last = next; });
 function endDrawing() { drawing = false; last = null; }
 fogCanvas.addEventListener('pointerup', endDrawing);
 fogCanvas.addEventListener('pointercancel', endDrawing);
@@ -292,12 +267,7 @@ fogCanvas.addEventListener('pointercancel', endDrawing);
 function scheduleLightning(enabled) {
   clearTimeout(lightningTimer);
   if (!enabled) return;
-  const strike = () => {
-    lightning.classList.remove('flash');
-    void lightning.offsetWidth;
-    lightning.classList.add('flash');
-    lightningTimer = setTimeout(strike, rand(7000, 18000));
-  };
+  const strike = () => { lightning.classList.remove('flash'); void lightning.offsetWidth; lightning.classList.add('flash'); lightningTimer = setTimeout(strike, rand(7000, 18000)); };
   lightningTimer = setTimeout(strike, rand(3500, 9000));
 }
 
@@ -313,50 +283,80 @@ function setWeatherPanel(open) {
   weatherToggle.setAttribute('aria-expanded', String(open));
 }
 
+function cycleBlinds() {
+  const levels = [0, 22, 48, 72];
+  blindStep = (blindStep + 1) % levels.length;
+  app.classList.add('blinds-manual');
+  app.style.setProperty('--blind-drop', `${levels[blindStep]}%`);
+  blindButton.setAttribute('aria-label', `Adjust blinds, ${levels[blindStep]} percent lowered`);
+}
+
+function setRoomDot(index) {
+  roomDots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+}
+
+function scrollRoomTo(index, smooth = true) {
+  if (!roomTrack || window.innerWidth > 900) return;
+  roomTrack.scrollTo({ left: roomTrack.clientWidth * index, behavior: smooth ? 'smooth' : 'auto' });
+  setRoomDot(index);
+}
+
+async function loadRoomLinks() {
+  try {
+    const response = await fetch(`room-links.json?ts=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Room links unavailable');
+    const data = await response.json();
+    const books = data.bookshelf?.books || [];
+    const byId = Object.fromEntries(books.map(book => [book.id, book]));
+    bookButtons.forEach(button => {
+      const book = byId[button.dataset.bookId];
+      const label = button.querySelector('.book-label');
+      if (!book) return;
+      label.textContent = book.title || '';
+      button.title = book.title || '';
+      const enabled = Boolean(book.enabled && book.url);
+      button.classList.toggle('enabled', enabled);
+      button.onclick = enabled ? () => window.open(book.url, '_blank', 'noopener,noreferrer') : null;
+    });
+  } catch (error) {
+    console.warn('Room links could not be loaded.', error);
+  }
+}
+
 lampButton.addEventListener('click', changeLamp);
 lampControl.addEventListener('click', changeLamp);
-clearButton.addEventListener('click', () => {
-  fogGlass(0.30);
-  hint.style.opacity = '1';
-  setTimeout(() => { hint.style.opacity = '0'; }, 1800);
+blindButton.addEventListener('click', cycleBlinds);
+musicBox.addEventListener('click', () => {
+  const playing = musicBox.classList.toggle('playing');
+  musicBox.setAttribute('aria-pressed', String(playing));
+  musicBox.setAttribute('aria-label', playing ? 'Stop the music box' : 'Start the music box');
 });
+clearButton.addEventListener('click', () => { fogGlass(0.30); hint.style.opacity = '1'; setTimeout(() => { hint.style.opacity = '0'; }, 1800); });
 weatherToggle.addEventListener('click', () => setWeatherPanel(weatherPanel.hidden));
 weatherClose.addEventListener('click', () => setWeatherPanel(false));
-weatherLocationButton.addEventListener('click', () => {
-  setWeatherPanel(false);
-  placePanel.hidden = false;
-});
+weatherLocationButton.addEventListener('click', () => { setWeatherPanel(false); placePanel.hidden = false; });
 
 dockToggle.addEventListener('click', () => {
   const open = controlDock.classList.toggle('open');
   dockToggle.setAttribute('aria-expanded', String(open));
   dockToggle.setAttribute('aria-label', open ? 'Close controls' : 'Open controls');
 });
-placeButton.addEventListener('click', () => {
-  setWeatherPanel(false);
-  placePanel.hidden = false;
-});
+placeButton.addEventListener('click', () => { setWeatherPanel(false); placePanel.hidden = false; });
 closePlace.addEventListener('click', () => { placePanel.hidden = true; });
 placePanel.addEventListener('click', event => { if (event.target === placePanel) placePanel.hidden = true; });
-document.addEventListener('pointerdown', event => {
-  if (!weatherPanel.hidden && !weatherPanel.contains(event.target) && !weatherToggle.contains(event.target)) setWeatherPanel(false);
-});
+document.addEventListener('pointerdown', event => { if (!weatherPanel.hidden && !weatherPanel.contains(event.target) && !weatherToggle.contains(event.target)) setWeatherPanel(false); });
+roomDots.forEach((dot, index) => dot.addEventListener('click', () => scrollRoomTo(index)));
+if (roomTrack) roomTrack.addEventListener('scroll', () => { if (window.innerWidth <= 900) setRoomDot(Math.round(roomTrack.scrollLeft / Math.max(1, roomTrack.clientWidth))); }, { passive: true });
 
 function fillCountries(selected) {
   countrySelect.innerHTML = '';
-  Object.entries(catalog.countries).forEach(([code, country]) => {
-    const option = new Option(country.name, code, false, code === selected);
-    countrySelect.add(option);
-  });
+  Object.entries(catalog.countries).forEach(([code, country]) => { const option = new Option(country.name, code, false, code === selected); countrySelect.add(option); });
 }
 
 function fillLocations(countryCode, selected) {
   locationSelect.innerHTML = '';
   const country = catalog.countries[countryCode];
-  country.locations.forEach(location => {
-    const option = new Option(location.name, location.id, false, location.id === selected);
-    locationSelect.add(option);
-  });
+  country.locations.forEach(location => { const option = new Option(location.name, location.id, false, location.id === selected); locationSelect.add(option); });
 }
 
 async function loadWeather(countryCode, locationId) {
@@ -377,12 +377,7 @@ async function loadWeather(countryCode, locationId) {
   }
 }
 
-countrySelect.addEventListener('change', () => {
-  const countryCode = countrySelect.value;
-  const first = catalog.countries[countryCode].locations[0];
-  fillLocations(countryCode, first.id);
-  loadWeather(countryCode, first.id);
-});
+countrySelect.addEventListener('change', () => { const countryCode = countrySelect.value; const first = catalog.countries[countryCode].locations[0]; fillLocations(countryCode, first.id); loadWeather(countryCode, first.id); });
 locationSelect.addEventListener('change', () => loadWeather(countrySelect.value, locationSelect.value));
 
 async function initWeather() {
@@ -396,17 +391,17 @@ async function initWeather() {
     fillCountries(country);
     fillLocations(country, location);
     await loadWeather(country, location);
-  } catch (error) {
-    applyWeather(fallbackWeather);
-  }
+  } catch (error) { applyWeather(fallbackWeather); }
 }
 
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(sizeCanvases, 120);
+  resizeTimer = setTimeout(() => { sizeCanvases(); if (window.innerWidth <= 900) scrollRoomTo(1, false); }, 120);
 });
 
 sizeCanvases();
 animateRain();
 initWeather();
+loadRoomLinks();
+requestAnimationFrame(() => { if (window.innerWidth <= 900) scrollRoomTo(1, false); });
