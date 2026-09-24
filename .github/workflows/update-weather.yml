@@ -1,0 +1,36 @@
+name: Update SEA weather cache
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh cached weather
+        run: python scripts/update_weather.py
+
+      - name: Commit changed cache files
+        run: |
+          if git diff --quiet -- weather/data; then
+            echo "Weather cache is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add weather/data
+          git commit -m "Refresh SEA weather cache"
+          git push
