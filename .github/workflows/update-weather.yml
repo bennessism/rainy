@@ -31,12 +31,12 @@ jobs:
 
       - name: Commit changed cache files
         run: |
-          if git diff --quiet -- weather/data; then
-            echo "Weather cache is unchanged."
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add weather/data
+          if git diff --cached --quiet; then
+            echo "Weather cache is unchanged."
+            exit 0
+          fi
           git commit -m "Refresh SEA weather cache"
           git push
