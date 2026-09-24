@@ -42,10 +42,15 @@
       <span>a quiet little place</span>
     </header>
 
-    <nav class="controls" aria-label="Rainy Window controls">
-      <button id="rainButton" type="button">Rain · Normal</button>
-      <button id="lampControl" type="button">Lamp · On</button>
-      <button id="clearButton" type="button">Fog Glass</button>
+    <nav class="control-dock" id="controlDock" aria-label="Rainy Window controls">
+      <div class="control-items" id="controlItems">
+        <button id="rainButton" type="button">Rain · Normal</button>
+        <button id="lampControl" type="button">Lamp · On</button>
+        <button id="clearButton" type="button">Fog Glass</button>
+      </div>
+      <button class="dock-toggle" id="dockToggle" type="button" aria-label="Open controls" aria-expanded="false">
+        <span></span><span></span><span></span><span></span>
+      </button>
     </nav>
   </main>
 
