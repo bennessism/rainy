@@ -1,0 +1,16 @@
+{
+  "bookshelf": {
+    "books": [
+      {"id":"book-1","title":"Book One","url":"","enabled":false},
+      {"id":"book-2","title":"Book Two","url":"","enabled":false},
+      {"id":"book-3","title":"Book Three","url":"","enabled":false},
+      {"id":"book-4","title":"Book Four","url":"","enabled":false},
+      {"id":"book-5","title":"Book Five","url":"","enabled":false},
+      {"id":"book-6","title":"Book Six","url":"","enabled":false},
+      {"id":"book-7","title":"Book Seven","url":"","enabled":false},
+      {"id":"book-8","title":"Book Eight","url":"","enabled":false},
+      {"id":"book-9","title":"Book Nine","url":"","enabled":false},
+      {"id":"book-10","title":"Book Ten","url":"","enabled":false}
+    ]
+  }
+}
