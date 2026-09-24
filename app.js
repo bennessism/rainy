@@ -46,6 +46,9 @@ let dpr = 1;
 let lightningTimer = null;
 let naturalFogStrength = 0;
 let blindStep = -1;
+let musicAudioContext = null;
+let musicLoopTimer = null;
+let musicPlaying = false;
 
 const fallbackWeather = {
   name: 'Sabah', city: 'Kota Kinabalu', temperature_c: 27,
@@ -301,6 +304,83 @@ function scrollRoomTo(index, smooth = true) {
   setRoomDot(index);
 }
 
+function scheduleMusicNote(context, destination, frequency, start, duration) {
+  const gain = context.createGain();
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(0.085, start + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  gain.connect(destination);
+
+  const fundamental = context.createOscillator();
+  fundamental.type = 'sine';
+  fundamental.frequency.setValueAtTime(frequency, start);
+  fundamental.connect(gain);
+  fundamental.start(start);
+  fundamental.stop(start + duration + 0.03);
+
+  const overtoneGain = context.createGain();
+  overtoneGain.gain.value = 0.22;
+  overtoneGain.connect(gain);
+  const overtone = context.createOscillator();
+  overtone.type = 'triangle';
+  overtone.frequency.setValueAtTime(frequency * 2, start);
+  overtone.connect(overtoneGain);
+  overtone.start(start);
+  overtone.stop(start + Math.min(duration, 0.18));
+}
+
+function playMusicPhrase() {
+  if (!musicPlaying || !musicAudioContext) return;
+  const context = musicAudioContext;
+  const master = context.createGain();
+  master.gain.value = 0.72;
+  master.connect(context.destination);
+
+  const melody = [
+    [659.25,.22],[622.25,.22],[659.25,.22],[622.25,.22],[659.25,.22],[493.88,.27],[587.33,.22],[523.25,.22],[440.00,.42],
+    [261.63,.22],[329.63,.22],[440.00,.22],[493.88,.42],[329.63,.22],[415.30,.22],[493.88,.22],[523.25,.42],
+    [329.63,.22],[659.25,.22],[622.25,.22],[659.25,.22],[622.25,.22],[659.25,.22],[493.88,.27],[587.33,.22],[523.25,.22],[440.00,.48]
+  ];
+  let cursor = context.currentTime + 0.05;
+  for (const [frequency, duration] of melody) {
+    scheduleMusicNote(context, master, frequency, cursor, duration * 0.88);
+    cursor += duration;
+  }
+  const loopDelay = Math.max(200, (cursor - context.currentTime + 0.45) * 1000);
+  musicLoopTimer = setTimeout(playMusicPhrase, loopDelay);
+}
+
+async function startMusicBox() {
+  if (musicPlaying) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  musicPlaying = true;
+  musicAudioContext = new AudioContextClass();
+  if (musicAudioContext.state === 'suspended') await musicAudioContext.resume();
+  musicBox.classList.add('playing');
+  musicBox.setAttribute('aria-pressed', 'true');
+  musicBox.setAttribute('aria-label', 'Stop the music box');
+  playMusicPhrase();
+}
+
+function stopMusicBox() {
+  musicPlaying = false;
+  clearTimeout(musicLoopTimer);
+  musicLoopTimer = null;
+  musicBox.classList.remove('playing');
+  musicBox.setAttribute('aria-pressed', 'false');
+  musicBox.setAttribute('aria-label', 'Start the music box');
+  if (musicAudioContext) {
+    musicAudioContext.close().catch(() => {});
+    musicAudioContext = null;
+  }
+}
+
+async function toggleMusicBox() {
+  if (musicPlaying) stopMusicBox();
+  else await startMusicBox();
+}
+
 async function loadRoomLinks() {
   try {
     const response = await fetch(`room-links.json?ts=${Date.now()}`, { cache: 'no-store' });
@@ -311,9 +391,16 @@ async function loadRoomLinks() {
     bookButtons.forEach(button => {
       const book = byId[button.dataset.bookId];
       const label = button.querySelector('.book-label');
-      if (!book) return;
+      if (!book) {
+        button.hidden = true;
+        return;
+      }
+      button.hidden = false;
       label.textContent = book.title || '';
       button.title = book.title || '';
+      button.classList.toggle('horizontal', book.orientation === 'horizontal');
+      const targetShelf = document.querySelector(`.shelf[data-shelf="${book.shelf || 'top'}"]`);
+      if (targetShelf && button.parentElement !== targetShelf) targetShelf.appendChild(button);
       const enabled = Boolean(book.enabled && book.url);
       button.classList.toggle('enabled', enabled);
       button.onclick = enabled ? () => window.open(book.url, '_blank', 'noopener,noreferrer') : null;
@@ -326,11 +413,7 @@ async function loadRoomLinks() {
 lampButton.addEventListener('click', changeLamp);
 lampControl.addEventListener('click', changeLamp);
 blindButton.addEventListener('click', cycleBlinds);
-musicBox.addEventListener('click', () => {
-  const playing = musicBox.classList.toggle('playing');
-  musicBox.setAttribute('aria-pressed', String(playing));
-  musicBox.setAttribute('aria-label', playing ? 'Stop the music box' : 'Start the music box');
-});
+musicBox.addEventListener('click', toggleMusicBox);
 clearButton.addEventListener('click', () => { fogGlass(0.30); hint.style.opacity = '1'; setTimeout(() => { hint.style.opacity = '0'; }, 1800); });
 weatherToggle.addEventListener('click', () => setWeatherPanel(weatherPanel.hidden));
 weatherClose.addEventListener('click', () => setWeatherPanel(false));
@@ -356,7 +439,7 @@ function fillCountries(selected) {
 function fillLocations(countryCode, selected) {
   locationSelect.innerHTML = '';
   const country = catalog.countries[countryCode];
-  country.locations.forEach(location => { const option = new Option(location.name, location.id, false, location.id === selected); locationSelect.add(option); });
+  country.locations.forEach(location => { const option = new Option(location.name, location.id, false, location.id === selected); countrySelect.add ? locationSelect.add(option) : null; });
 }
 
 async function loadWeather(countryCode, locationId) {
