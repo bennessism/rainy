@@ -16,6 +16,7 @@
         {"id":"selangor","name":"Selangor","city":"Shah Alam","lat":3.0738,"lon":101.5183},
         {"id":"terengganu","name":"Terengganu","city":"Kuala Terengganu","lat":5.3296,"lon":103.1370},
         {"id":"sabah","name":"Sabah","city":"Kota Kinabalu","lat":5.9804,"lon":116.0735},
+        {"id":"labuan","name":"Labuan","city":"Bandar Labuan","lat":5.2767,"lon":115.2417},
         {"id":"sarawak","name":"Sarawak","city":"Kuching","lat":1.5533,"lon":110.3592}
       ]
     },
