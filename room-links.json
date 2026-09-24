@@ -1,9 +1,9 @@
 {
   "tableBooks": [
     {"id":"book-1","title":"The Passenger Who Wasn’t There - Episode 1: The Empty Seat","url":"https://thefictories.blogspot.com/2026/09/the-passenger-who-wasnt-there-episode-1.html","enabled":true,"height":"tall"},
-    {"id":"book-2","title":"Book Two","url":"","enabled":false,"height":"medium"},
-    {"id":"book-3","title":"Book Three","url":"","enabled":false,"height":"short"},
-    {"id":"book-4","title":"Book Four","url":"","enabled":false,"height":"tall"},
-    {"id":"book-5","title":"Book Five","url":"","enabled":false,"height":"medium"}
+    {"id":"book-2","title":"Kido Learns Japanese","url":"https://kidolearnsjapanese.blogspot.com/","enabled":true,"height":"medium"},
+    {"id":"book-3","title":"三字经","url":"","enabled":false,"height":"short"},
+    {"id":"book-4","title":"The Passenger Who Wasn’t There - Episode 2: The Red Scarf","url":"https://thefictories.blogspot.com/2026/09/the-passenger-who-wasnt-there-episode-2.html","enabled":ture,"height":"tall"},
+    {"id":"book-5","title":"Unspoken","url":"https://bennessism.github.io/unspoken/","enabled":true,"height":"medium"}
   ]
 }
