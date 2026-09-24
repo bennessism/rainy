@@ -3,55 +3,86 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0a111a">
-  <title>Rainy Window</title>
+  <meta name="theme-color" content="#101318">
+  <title>Window</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app" id="app">
-    <div class="room-glow" aria-hidden="true"></div>
-
-    <section class="window-scene" aria-label="Rainy window">
-      <div class="city" aria-hidden="true">
-        <div class="sky-glow"></div>
-        <div class="building building-a"></div>
-        <div class="building building-b"></div>
-        <div class="building building-c"></div>
-        <div class="building building-d"></div>
-      </div>
-
-      <canvas id="rainCanvas" aria-hidden="true"></canvas>
-      <canvas id="fogCanvas" aria-label="Fogged glass. Drag to write or draw on the window."></canvas>
-      <div class="glass-reflection" aria-hidden="true"></div>
-      <div class="window-frame" aria-hidden="true">
-        <i class="frame-v"></i>
-        <i class="frame-h"></i>
-      </div>
-
-      <div class="hint" id="hint">Drag on the glass</div>
-    </section>
-
-    <button class="lamp" id="lampButton" type="button" aria-label="Toggle lamp" aria-pressed="true">
-      <span class="lamp-shade"></span>
-      <span class="lamp-neck"></span>
-      <span class="lamp-base"></span>
-    </button>
-
+  <main class="app is-night" id="app">
     <header class="brand">
-      <strong>Rainy Window</strong>
-      <span>a quiet little place</span>
+      <strong>Window</strong>
+      <span id="weatherLabel">Sabah · loading weather</span>
     </header>
 
-    <nav class="control-dock" id="controlDock" aria-label="Rainy Window controls">
+    <section class="room" aria-label="A quiet room overlooking the city">
+      <div class="room-light" aria-hidden="true"></div>
+
+      <section class="window-shell" aria-label="Weather window">
+        <div class="window-scene" id="windowScene">
+          <div class="sky" aria-hidden="true">
+            <div class="sky-glow"></div>
+            <div class="cloud cloud-a"></div>
+            <div class="cloud cloud-b"></div>
+            <div class="cloud cloud-c"></div>
+          </div>
+
+          <div class="skyline far" aria-hidden="true">
+            <i class="bldg f1"></i><i class="bldg f2"></i><i class="bldg f3"></i><i class="bldg f4"></i><i class="bldg f5"></i>
+          </div>
+          <div class="skyline mid" aria-hidden="true">
+            <i class="bldg m1 tower-light"></i><i class="bldg m2"></i><i class="bldg m3 tower-light"></i><i class="bldg m4"></i>
+          </div>
+          <div class="skyline near" aria-hidden="true">
+            <i class="bldg n1"></i><i class="bldg n2 tower-light"></i><i class="bldg n3"></i>
+          </div>
+
+          <div class="haze" aria-hidden="true"></div>
+          <canvas id="rainCanvas" aria-hidden="true"></canvas>
+          <div class="lightning" id="lightning" aria-hidden="true"></div>
+          <canvas id="fogCanvas" aria-label="Fogged glass. Drag to write or draw on the window."></canvas>
+          <div class="glass-reflection" aria-hidden="true"></div>
+
+          <div class="window-bars" aria-hidden="true">
+            <i class="bar-v"></i>
+            <i class="bar-h"></i>
+          </div>
+
+          <div class="hint" id="hint">Draw on the glass</div>
+        </div>
+      </section>
+
+      <button class="floor-lamp" id="lampButton" type="button" aria-label="Toggle floor lamp" aria-pressed="true">
+        <span class="lamp-head"></span>
+        <span class="lamp-arm"></span>
+        <span class="lamp-pole"></span>
+        <span class="lamp-foot"></span>
+      </button>
+    </section>
+
+    <nav class="control-dock" id="controlDock" aria-label="Window controls">
       <div class="control-items" id="controlItems">
-        <button id="rainButton" type="button">Rain · Normal</button>
         <button id="lampControl" type="button">Lamp · On</button>
         <button id="clearButton" type="button">Fog Glass</button>
+        <button id="placeButton" type="button">Location</button>
       </div>
       <button class="dock-toggle" id="dockToggle" type="button" aria-label="Open controls" aria-expanded="false">
         <span></span><span></span><span></span><span></span>
       </button>
     </nav>
+
+    <section class="place-panel" id="placePanel" aria-label="Weather location" hidden>
+      <div class="place-card">
+        <div class="place-head">
+          <strong>Weather location</strong>
+          <button id="closePlace" type="button" aria-label="Close location">×</button>
+        </div>
+        <label>Country<select id="countrySelect"></select></label>
+        <label>Location<select id="locationSelect"></select></label>
+        <div class="weather-meta" id="weatherMeta">Weather cache refreshes every 6 hours.</div>
+      </div>
+    </section>
+
+    <footer class="source-note">Weather data: Open-Meteo · cached by this site</footer>
   </main>
 
   <script src="app.js"></script>
