@@ -6,6 +6,27 @@
   <meta name="theme-color" content="#101318">
   <title>Window</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .room{background:linear-gradient(90deg,#1b1d20 0%,#24272b 18%,#2b2e31 50%,#24272b 82%,#1a1c1f 100%)}
+    .room-wall{position:absolute;inset:5vh 5vw 4vh;border-radius:28px;background:linear-gradient(180deg,#2d3033 0%,#25282b 72%,#202326 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.025),inset 0 -30px 60px rgba(0,0,0,.16);pointer-events:none}
+    .room-wall:after{content:"";position:absolute;left:4%;right:4%;bottom:3vh;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);box-shadow:0 8px 16px rgba(0,0,0,.18)}
+    .window-recess{position:relative;z-index:5;padding:20px 22px 26px;border-radius:30px;background:linear-gradient(145deg,#35393d,#1b1f23 72%);box-shadow:inset 18px 18px 28px rgba(0,0,0,.3),inset -7px -7px 14px rgba(255,255,255,.025),0 12px 26px rgba(0,0,0,.2)}
+    .window-recess:before{content:"";position:absolute;inset:8px 9px 12px;border-radius:23px;border:1px solid rgba(255,255,255,.035);pointer-events:none}
+    .window-shell{z-index:1}
+    .window-shell:before{content:"";position:absolute;z-index:14;left:-12px;right:-12px;top:-12px;height:8px;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#3b4147,#1b2025);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+    .window-shell:after{left:-24px!important;right:-24px!important;bottom:-20px!important;height:20px!important;border-radius:3px 3px 10px 10px!important;background:linear-gradient(180deg,#343a40,#161b1f)!important;box-shadow:0 10px 18px rgba(0,0,0,.3)!important}
+    .room-light{z-index:3;top:-3vh!important;width:min(110vw,1180px)!important;height:min(66vh,700px)!important;background:radial-gradient(ellipse at 50% 7%,rgba(255,211,145,.32),rgba(255,174,88,.16) 30%,rgba(255,151,61,.06) 50%,transparent 74%)!important}
+    .ceiling-lamp{z-index:15!important}
+    .roof-detail{position:absolute;display:block;pointer-events:none}
+    .antenna{left:50%;top:-18px;width:2px;height:18px;background:#454f58;transform:translateX(-50%)}
+    .antenna:after{content:"";position:absolute;left:50%;top:-2px;width:5px;height:5px;border-radius:50%;background:#505b65;transform:translateX(-50%)}
+    .dish{right:12%;top:-9px;width:13px;height:7px;border:2px solid #46515b;border-top:0;border-radius:0 0 12px 12px;transform:rotate(-18deg)}
+    .dish:after{content:"";position:absolute;left:5px;bottom:-5px;width:2px;height:5px;background:#46515b}
+    .tank{left:12%;top:-7px;width:14px;height:8px;border-radius:3px 3px 1px 1px;background:#3d4750;box-shadow:inset 0 1px rgba(255,255,255,.06)}
+    .utility{right:14%;top:-8px;width:16px;height:8px;background:#3b454d;border-radius:2px}
+    .is-night .m1 .roof-detail,.is-night .m3 .roof-detail,.is-night .n2 .roof-detail{filter:brightness(.9)}
+    @media(max-width:760px){.room-wall{inset:4vh 2.5vw 3vh;border-radius:20px}.window-recess{padding:13px 13px 19px;border-radius:22px}.window-recess:before{inset:6px 6px 9px;border-radius:17px}.window-shell:after{left:-17px!important;right:-17px!important;bottom:-14px!important;height:14px!important}.room-light{width:132vw!important;height:56vh!important;top:-4vh!important}}
+  </style>
 </head>
 <body>
   <main class="app is-night" id="app">
@@ -20,100 +41,66 @@
     <section class="weather-panel" id="weatherPanel" hidden aria-label="Weather details">
       <div class="weather-card">
         <div class="weather-card-head">
-          <div>
-            <strong id="weatherPlace">Sabah · Kota Kinabalu</strong>
-            <span id="weatherCondition">Loading weather…</span>
-          </div>
+          <div><strong id="weatherPlace">Sabah · Kota Kinabalu</strong><span id="weatherCondition">Loading weather…</span></div>
           <button id="weatherClose" type="button" aria-label="Close weather details">×</button>
         </div>
-        <div class="weather-temp-row">
-          <strong id="weatherTemp">--°C</strong>
-          <span id="weatherFeels">Feels --°C</span>
-        </div>
+        <div class="weather-temp-row"><strong id="weatherTemp">--°C</strong><span id="weatherFeels">Feels --°C</span></div>
         <div class="weather-grid">
           <div><span>Cloud</span><strong id="weatherCloud">--%</strong></div>
           <div><span>Rain now</span><strong id="weatherRain">-- mm</strong></div>
           <div><span>Humidity</span><strong id="weatherHumidity">--%</strong></div>
           <div><span>Wind</span><strong id="weatherWind">-- km/h</strong></div>
         </div>
-        <div class="weather-card-foot">
-          <span id="weatherUpdated">Updated --</span>
-          <button id="weatherLocationButton" type="button">Change location</button>
-        </div>
+        <div class="weather-card-foot"><span id="weatherUpdated">Updated --</span><button id="weatherLocationButton" type="button">Change location</button></div>
       </div>
     </section>
 
     <section class="room" aria-label="A quiet room overlooking the city">
+      <div class="room-wall" aria-hidden="true"></div>
       <div class="room-light" aria-hidden="true"></div>
 
       <button class="ceiling-lamp" id="lampButton" type="button" aria-label="Toggle ceiling lamp" aria-pressed="true">
-        <span class="lamp-canopy"></span>
-        <span class="lamp-cord"></span>
-        <span class="lamp-socket"></span>
-        <span class="lamp-shade"></span>
+        <span class="lamp-canopy"></span><span class="lamp-cord"></span><span class="lamp-socket"></span><span class="lamp-shade"></span>
       </button>
 
-      <section class="window-shell" aria-label="Weather window">
-        <div class="window-scene" id="windowScene">
-          <div class="sky" aria-hidden="true">
-            <div class="sky-glow"></div>
-            <div class="cloud cloud-a"></div>
-            <div class="cloud cloud-b"></div>
-            <div class="cloud cloud-c"></div>
-          </div>
+      <div class="window-recess">
+        <section class="window-shell" aria-label="Weather window">
+          <div class="window-scene" id="windowScene">
+            <div class="sky" aria-hidden="true"><div class="sky-glow"></div><div class="cloud cloud-a"></div><div class="cloud cloud-b"></div><div class="cloud cloud-c"></div></div>
 
-          <div class="skyline far" aria-hidden="true">
-            <i class="bldg f1"></i><i class="bldg f2"></i><i class="bldg f3"></i><i class="bldg f4"></i><i class="bldg f5"></i>
-          </div>
-          <div class="skyline mid" aria-hidden="true">
-            <i class="bldg m1 tower-light"></i><i class="bldg m2"></i><i class="bldg m3 tower-light"></i><i class="bldg m4"></i>
-          </div>
-          <div class="skyline near" aria-hidden="true">
-            <i class="bldg n1"></i><i class="bldg n2 tower-light"></i><i class="bldg n3"></i>
-          </div>
+            <div class="skyline far" aria-hidden="true">
+              <i class="bldg f1"></i><i class="bldg f2"><span class="roof-detail tank"></span></i><i class="bldg f3"></i><i class="bldg f4"><span class="roof-detail antenna"></span></i><i class="bldg f5"></i>
+            </div>
+            <div class="skyline mid" aria-hidden="true">
+              <i class="bldg m1 tower-light"><span class="roof-detail antenna"></span></i><i class="bldg m2"><span class="roof-detail dish"></span></i><i class="bldg m3 tower-light"><span class="roof-detail utility"></span></i><i class="bldg m4"><span class="roof-detail tank"></span></i>
+            </div>
+            <div class="skyline near" aria-hidden="true">
+              <i class="bldg n1"></i><i class="bldg n2 tower-light"><span class="roof-detail dish"></span></i><i class="bldg n3"><span class="roof-detail utility"></span></i>
+            </div>
 
-          <div class="haze" aria-hidden="true"></div>
-          <canvas id="rainCanvas" aria-hidden="true"></canvas>
-          <div class="lightning" id="lightning" aria-hidden="true"></div>
-          <canvas id="fogCanvas" aria-label="Glass. Drag to write or draw when condensation is visible."></canvas>
-          <div class="glass-reflection" aria-hidden="true"></div>
-
-          <div class="window-bars" aria-hidden="true">
-            <i class="bar-v"></i>
-            <i class="bar-h"></i>
+            <div class="haze" aria-hidden="true"></div>
+            <canvas id="rainCanvas" aria-hidden="true"></canvas>
+            <div class="lightning" id="lightning" aria-hidden="true"></div>
+            <canvas id="fogCanvas" aria-label="Glass. Drag to write or draw when condensation is visible."></canvas>
+            <div class="glass-reflection" aria-hidden="true"></div>
+            <div class="window-bars" aria-hidden="true"><i class="bar-v"></i><i class="bar-h"></i></div>
+            <div class="hint" id="hint">Draw on the glass</div>
           </div>
-
-          <div class="hint" id="hint">Draw on the glass</div>
-        </div>
-      </section>
+        </section>
+      </div>
     </section>
 
     <nav class="control-dock" id="controlDock" aria-label="Window controls">
-      <div class="control-items" id="controlItems">
-        <button id="lampControl" type="button">Lamp · On</button>
-        <button id="clearButton" type="button">Fog Glass</button>
-        <button id="placeButton" type="button">Location</button>
-      </div>
-      <button class="dock-toggle" id="dockToggle" type="button" aria-label="Open controls" aria-expanded="false">
-        <span></span><span></span><span></span><span></span>
-      </button>
+      <div class="control-items" id="controlItems"><button id="lampControl" type="button">Lamp · On</button><button id="clearButton" type="button">Fog Glass</button><button id="placeButton" type="button">Location</button></div>
+      <button class="dock-toggle" id="dockToggle" type="button" aria-label="Open controls" aria-expanded="false"><span></span><span></span><span></span><span></span></button>
     </nav>
 
     <section class="place-panel" id="placePanel" aria-label="Weather location" hidden>
-      <div class="place-card">
-        <div class="place-head">
-          <strong>Weather location</strong>
-          <button id="closePlace" type="button" aria-label="Close location">×</button>
-        </div>
-        <label>Country<select id="countrySelect"></select></label>
-        <label>Location<select id="locationSelect"></select></label>
-        <div class="weather-meta" id="weatherMeta">Weather cache refreshes every 6 hours.</div>
-      </div>
+      <div class="place-card"><div class="place-head"><strong>Weather location</strong><button id="closePlace" type="button" aria-label="Close location">×</button></div><label>Country<select id="countrySelect"></select></label><label>Location<select id="locationSelect"></select></label><div class="weather-meta" id="weatherMeta">Weather cache refreshes every 6 hours.</div></div>
     </section>
 
     <footer class="source-note">Weather data: Open-Meteo · cached by this site</footer>
   </main>
-
   <script src="app.js"></script>
 </body>
 </html>
