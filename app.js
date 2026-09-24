@@ -8,6 +8,8 @@ const rainButton = document.getElementById('rainButton');
 const lampButton = document.getElementById('lampButton');
 const lampControl = document.getElementById('lampControl');
 const clearButton = document.getElementById('clearButton');
+const controlDock = document.getElementById('controlDock');
+const dockToggle = document.getElementById('dockToggle');
 
 const modes = [
   { name: 'Drizzle', count: 65, min: 2, max: 5 },
@@ -151,6 +153,12 @@ clearButton.addEventListener('click', () => {
   fogGlass();
   hint.style.opacity = '1';
   setTimeout(() => { hint.style.opacity = '0'; }, 1600);
+});
+
+dockToggle.addEventListener('click', () => {
+  const isOpen = controlDock.classList.toggle('open');
+  dockToggle.setAttribute('aria-expanded', String(isOpen));
+  dockToggle.setAttribute('aria-label', isOpen ? 'Close controls' : 'Open controls');
 });
 
 let resizeTimer;
