@@ -96,31 +96,32 @@
   });
 })();
 
-// Keep the location chooser as the next card in the weather stack.
+// Match Wind Field: location controls expand inside the master weather card.
 (() => {
   const weatherPanel = document.getElementById('weatherPanel');
+  const weatherCard = weatherPanel?.querySelector('.weather-card');
   const weatherToggle = document.getElementById('weatherToggle');
+  const weatherClose = document.getElementById('weatherClose');
   const weatherLocationButton = document.getElementById('weatherLocationButton');
   const placeButton = document.getElementById('placeButton');
   const placePanel = document.getElementById('placePanel');
-  if (!weatherPanel || !placePanel) return;
+  const closePlace = document.getElementById('closePlace');
+  const countrySelect = document.getElementById('countrySelect');
+  const locationSelect = document.getElementById('locationSelect');
+  if (!weatherPanel || !weatherCard || !placePanel || !countrySelect || !locationSelect) return;
 
-  // Make it a real child of the weather panel instead of a separately positioned overlay.
-  weatherPanel.appendChild(placePanel);
+  // The picker becomes part of the same card, exactly like Wind Field.
+  weatherCard.appendChild(placePanel);
 
   const style = document.createElement('style');
   style.textContent = `
-    .weather-panel{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .weather-panel[hidden]{display:none}
+    .weather-panel{display:block!important}
+    .weather-panel[hidden]{display:none!important}
+    .weather-panel .weather-card{overflow:visible}
     .weather-panel .place-panel{
       position:static!important;
       inset:auto!important;
       z-index:auto!important;
-      display:block!important;
       width:100%!important;
       padding:0!important;
       margin:0!important;
@@ -130,28 +131,57 @@
     .weather-panel .place-panel[hidden]{display:none!important}
     .weather-panel .place-card{
       width:100%!important;
-      padding:14px!important;
-      border-radius:16px!important;
-      background:rgba(17,21,26,.94)!important;
-      backdrop-filter:blur(16px);
-      box-shadow:0 18px 44px rgba(0,0,0,.32)!important;
-      max-height:min(42vh,330px);
-      overflow:auto;
+      max-height:none!important;
+      overflow:visible!important;
+      margin-top:12px!important;
+      padding:12px 0 0!important;
+      border:0!important;
+      border-top:1px solid rgba(255,255,255,.08)!important;
+      border-radius:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      backdrop-filter:none!important;
     }
-    .weather-panel .place-head{margin-bottom:8px!important}
-    .weather-panel .place-head strong{font-size:13px!important}
-    .weather-panel .place-head button{width:28px!important;height:28px!important;font-size:19px!important}
-    .weather-panel .place-card label{margin-top:9px!important;font-size:10px!important}
-    .weather-panel .place-card select{padding:9px 10px!important;border-radius:10px!important}
-    .weather-panel .weather-meta{margin-top:10px!important;font-size:10px!important}
-    @media(max-height:700px){
-      .weather-panel .place-card{max-height:34vh}
+    .weather-panel .place-head{display:none!important}
+    .weather-panel .place-card label{
+      display:block!important;
+      margin:9px 0 0!important;
+      font-size:10px!important;
+      color:rgba(255,255,255,.62)!important;
+    }
+    .weather-panel .place-card select{
+      width:100%!important;
+      margin-top:5px!important;
+      padding:9px 10px!important;
+      border:1px solid rgba(255,255,255,.11)!important;
+      border-radius:9px!important;
+      background:#0c1218!important;
+      color:#fff!important;
+      outline:none!important;
+    }
+    .weather-panel .weather-meta{display:none!important}
+    .window-location-actions{display:flex;gap:7px;margin-top:10px}
+    .window-location-actions button{
+      flex:1;
+      border:1px solid rgba(255,255,255,.11);
+      background:rgba(255,255,255,.05);
+      border-radius:9px;
+      padding:9px;
+      color:#fff;
+      font:inherit;
+      font-size:10px;
+      cursor:pointer;
     }
   `;
   document.head.appendChild(style);
 
-  const title = placePanel.querySelector('.place-head strong');
-  if (title) title.textContent = 'Location';
+  const actions = document.createElement('div');
+  actions.className = 'window-location-actions';
+  const useButton = document.createElement('button');
+  useButton.type = 'button';
+  useButton.textContent = 'Use location';
+  actions.appendChild(useButton);
+  placePanel.querySelector('.place-card')?.appendChild(actions);
 
   const openPicker = event => {
     if (event) {
@@ -159,17 +189,45 @@
       event.stopImmediatePropagation();
     }
     weatherPanel.hidden = false;
-    weatherToggle?.setAttribute('aria-expanded','true');
+    weatherToggle?.setAttribute('aria-expanded', 'true');
     placePanel.hidden = false;
   };
+
+  const closePicker = () => {
+    placePanel.hidden = true;
+  };
+
+  // Use Wind Field's explicit-apply pattern instead of changing weather while browsing selects.
+  countrySelect.addEventListener('change', event => {
+    event.stopImmediatePropagation();
+    const countryCode = countrySelect.value;
+    const country = window.catalog?.countries?.[countryCode] || (typeof catalog !== 'undefined' ? catalog?.countries?.[countryCode] : null);
+    const first = country?.locations?.[0];
+    if (first && typeof fillLocations === 'function') fillLocations(countryCode, first.id);
+  }, true);
+
+  locationSelect.addEventListener('change', event => {
+    event.stopImmediatePropagation();
+  }, true);
+
+  useButton.addEventListener('click', () => {
+    if (typeof loadWeather === 'function') loadWeather(countrySelect.value, locationSelect.value);
+    closePicker();
+  });
 
   // Capture prevents the older app.js handlers from closing the master card first.
   weatherLocationButton?.addEventListener('click', openPicker, true);
   placeButton?.addEventListener('click', openPicker, true);
+  closePlace?.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    closePicker();
+  }, true);
 
+  weatherClose?.addEventListener('click', closePicker, true);
   weatherToggle?.addEventListener('click', () => {
     requestAnimationFrame(() => {
-      if (weatherPanel.hidden) placePanel.hidden = true;
+      if (weatherPanel.hidden) closePicker();
     });
   });
 })();
