@@ -1,9 +1,10 @@
-const CACHE_NAME = 'window-v4';
+const CACHE_NAME = 'window-v5';
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './touch-layout.js',
   './manifest.webmanifest',
   './favicon-32x32.png',
   './apple-touch-icon.png',
@@ -34,6 +35,7 @@ self.addEventListener('fetch', event => {
     url.pathname.endsWith('/index.html') ||
     url.pathname.endsWith('/style.css') ||
     url.pathname.endsWith('/app.js') ||
+    url.pathname.endsWith('/touch-layout.js') ||
     url.pathname.includes('/weather/data/') ||
     url.pathname.endsWith('/weather/catalog.json') ||
     url.pathname.endsWith('/room-links.json') ||
