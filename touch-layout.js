@@ -96,49 +96,56 @@
   });
 })();
 
-// Keep the location chooser visually attached to the weather detail card.
+// Keep the location chooser as the next card in the weather stack.
 (() => {
-  const app = document.getElementById('app');
   const weatherPanel = document.getElementById('weatherPanel');
   const weatherToggle = document.getElementById('weatherToggle');
-  const weatherClose = document.getElementById('weatherClose');
   const weatherLocationButton = document.getElementById('weatherLocationButton');
   const placeButton = document.getElementById('placeButton');
   const placePanel = document.getElementById('placePanel');
-  const closePlace = document.getElementById('closePlace');
-  if (!app || !weatherPanel || !placePanel) return;
+  if (!weatherPanel || !placePanel) return;
+
+  // Make it a real child of the weather panel instead of a separately positioned overlay.
+  weatherPanel.appendChild(placePanel);
 
   const style = document.createElement('style');
   style.textContent = `
-    .place-panel{
-      position:absolute!important;
-      z-index:46!important;
+    .weather-panel{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .weather-panel[hidden]{display:none}
+    .weather-panel .place-panel{
+      position:static!important;
       inset:auto!important;
+      z-index:auto!important;
       display:block!important;
-      place-items:initial!important;
-      width:min(92vw,360px)!important;
+      width:100%!important;
       padding:0!important;
+      margin:0!important;
       background:transparent!important;
       backdrop-filter:none!important;
     }
-    .place-panel[hidden]{display:none!important}
-    .place-card{
+    .weather-panel .place-panel[hidden]{display:none!important}
+    .weather-panel .place-card{
       width:100%!important;
       padding:14px!important;
       border-radius:16px!important;
       background:rgba(17,21,26,.94)!important;
       backdrop-filter:blur(16px);
       box-shadow:0 18px 44px rgba(0,0,0,.32)!important;
+      max-height:min(42vh,330px);
       overflow:auto;
     }
-    .place-head{margin-bottom:8px!important}
-    .place-head strong{font-size:13px!important}
-    .place-head button{width:28px!important;height:28px!important;font-size:19px!important}
-    .place-card label{margin-top:9px!important;font-size:10px!important}
-    .place-card select{padding:9px 10px!important;border-radius:10px!important}
-    .weather-meta{margin-top:10px!important;font-size:10px!important}
-    @media(max-width:760px){
-      .place-panel{width:min(calc(100vw - 28px),360px)!important}
+    .weather-panel .place-head{margin-bottom:8px!important}
+    .weather-panel .place-head strong{font-size:13px!important}
+    .weather-panel .place-head button{width:28px!important;height:28px!important;font-size:19px!important}
+    .weather-panel .place-card label{margin-top:9px!important;font-size:10px!important}
+    .weather-panel .place-card select{padding:9px 10px!important;border-radius:10px!important}
+    .weather-panel .weather-meta{margin-top:10px!important;font-size:10px!important}
+    @media(max-height:700px){
+      .weather-panel .place-card{max-height:34vh}
     }
   `;
   document.head.appendChild(style);
@@ -146,38 +153,23 @@
   const title = placePanel.querySelector('.place-head strong');
   if (title) title.textContent = 'Location';
 
-  function positionPlacePanel(){
-    if (weatherPanel.hidden || placePanel.hidden) return;
-    const appRect = app.getBoundingClientRect();
-    const weatherRect = weatherPanel.getBoundingClientRect();
-    const gap = 8;
-    placePanel.style.left = `${Math.round(weatherRect.left - appRect.left)}px`;
-    placePanel.style.top = `${Math.round(weatherRect.bottom - appRect.top + gap)}px`;
-    placePanel.style.width = `${Math.round(weatherRect.width)}px`;
-    const available = Math.max(150, window.innerHeight - weatherRect.bottom - gap - 12);
-    const card = placePanel.querySelector('.place-card');
-    if (card) card.style.maxHeight = `${available}px`;
-  }
-
-  function openPicker(){
+  const openPicker = event => {
+    if (event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
     weatherPanel.hidden = false;
     weatherToggle?.setAttribute('aria-expanded','true');
     placePanel.hidden = false;
-    requestAnimationFrame(positionPlacePanel);
-  }
+  };
 
-  weatherLocationButton?.addEventListener('click', () => openPicker());
-  placeButton?.addEventListener('click', () => openPicker());
+  // Capture prevents the older app.js handlers from closing the master card first.
+  weatherLocationButton?.addEventListener('click', openPicker, true);
+  placeButton?.addEventListener('click', openPicker, true);
 
   weatherToggle?.addEventListener('click', () => {
-    if (weatherPanel.hidden) placePanel.hidden = true;
-    else if (!placePanel.hidden) requestAnimationFrame(positionPlacePanel);
-  });
-
-  weatherClose?.addEventListener('click', () => { placePanel.hidden = true; });
-  closePlace?.addEventListener('click', () => { placePanel.hidden = true; });
-
-  window.addEventListener('resize', () => {
-    if (!placePanel.hidden && !weatherPanel.hidden) requestAnimationFrame(positionPlacePanel);
+    requestAnimationFrame(() => {
+      if (weatherPanel.hidden) placePanel.hidden = true;
+    });
   });
 })();
