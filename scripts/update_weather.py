@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import os
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -71,7 +70,6 @@ def main():
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     fetched_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    index = {"updated_at": fetched_at, "countries": {}}
 
     for code, country in catalog["countries"].items():
         locations = country["locations"]
@@ -101,16 +99,6 @@ def main():
         with path.open("w", encoding="utf-8") as handle:
             json.dump(out, handle, ensure_ascii=False, separators=(",", ":"))
             handle.write("\n")
-
-        index["countries"][code] = {
-            "name": country["name"],
-            "file": f"{code}.json",
-            "locations": len(locations),
-        }
-
-    with (DATA_DIR / "index.json").open("w", encoding="utf-8") as handle:
-        json.dump(index, handle, ensure_ascii=False, separators=(",", ":"))
-        handle.write("\n")
 
 
 if __name__ == "__main__":
